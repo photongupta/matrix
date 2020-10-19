@@ -4,12 +4,18 @@ class Matrix {
   private static final char MULTIPLY = '*';
 
   private int[][] matrix;
+  private int rows;
+  private int columns;
 
   public Matrix() {
+    this.rows = 3;
+    this.columns = 3;
     this.matrix = new int[3][3];
   }
 
   public Matrix(int row, int col) {
+    this.rows = row;
+    this.columns = col;
     this.matrix = new int[row][col];
   }
 
@@ -23,16 +29,12 @@ class Matrix {
     return newMatrix;
   }
 
-  private int numOfRows() {
-    return matrix.length;
-  }
-
-  private int numOfCols() {
-    return matrix[0].length;
-  }
-
   private int getElement(int row, int col) {
     return matrix[row][col];
+  }
+
+  private int setElement(int row, int col, int num) {
+    return matrix[row][col] = num;
   }
 
   private void insertRow(int rowIndex, int[] row) {
@@ -40,8 +42,8 @@ class Matrix {
   }
 
   public void print() {
-    for (int row = 0; row < numOfRows(); row++) {
-      for (int col = 0; col < numOfCols(); col++) {
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < columns; col++) {
         System.out.print(getElement(row, col) + " ");
       }
       System.out.println();
@@ -49,83 +51,129 @@ class Matrix {
     System.out.println();
   }
 
-  private int calculate(int num1, int num2, char action) {
+  private int calculate(Matrix other, int row, int col, char action) {
+    int num1 = 0, num2 = 0;
+
     switch (action) {
       case ADD:
+        num1 = getElement(row, col);
+        num2 = other.getElement(row, col);
         return num1 + num2;
       case SUBTRACT:
+        num1 = getElement(row, col);
+        num2 = other.getElement(row, col);
         return num1 - num2;
+      case MULTIPLY:
+        for (int i = 0; i < Math.min(other.rows, columns); i++) {
+          num1 += getElement(row, i) * other.getElement(i, col);
+        }
+        return num1;
       default:
         return 0;
     }
   }
 
   private int[] getRow(Matrix other, int rowNumber, char action) {
-    int[] row = new int[numOfCols()];
-    for (int colNumber = 0; colNumber < numOfCols(); colNumber++) {
-      int num1 = getElement(rowNumber, colNumber);
-      int num2 = other.getElement(rowNumber, colNumber);
-      row[colNumber] = calculate(num1, num2, action);
+    int[] row = new int[other.columns];
+    for (int colNumber = 0; colNumber < other.columns; colNumber++) {
+      row[colNumber] = calculate(other, rowNumber, colNumber, action);
     }
     return row;
   }
 
-  public int[] getRow(Matrix other, int rowNumber) {
-    int[] temp = new int[other.numOfCols()];
-    for (int i = 0; i < other.numOfCols(); i++) {
-      int product = 0;
-      for (int j = 0; j < Math.min(other.numOfRows(), numOfCols()); j++) {
-        product += matrix[rowNumber][j] * other.getElement(j, i);
-      }
-      temp[i] = product;
-    }
-    return temp;
-  }
-
   private Matrix performAction(Matrix other, char action) {
-    Matrix result = new Matrix(numOfRows(), numOfCols());
-    for (int rowNumber = 0; rowNumber < numOfRows(); rowNumber++) {
-      switch (action) {
-        case MULTIPLY:
-          result.insertRow(rowNumber, getRow(other, rowNumber));
-          break;
-        default:
-          result.insertRow(rowNumber, getRow(other, rowNumber, action));
-          break;
-      }
+    Matrix result = new Matrix(rows, other.columns);
+    for (int rowNumber = 0; rowNumber < rows; rowNumber++) {
+      result.insertRow(rowNumber, getRow(other, rowNumber, action));
     }
     return result;
   }
 
+  private boolean haveSameDimensions(Matrix other) {
+    return rows == other.rows && columns == other.columns;
+  }
+
   public Matrix add(Matrix other) {
+    if (!haveSameDimensions(other)) return null;
     return performAction(other, ADD);
   }
 
   public Matrix subtract(Matrix other) {
+    if (!haveSameDimensions(other)) return null;
     return performAction(other, SUBTRACT);
   }
 
   public Matrix multiply(Matrix other) {
     return performAction(other, MULTIPLY);
   }
+
+  private Matrix createSubMatrix(int col) {
+    Matrix subMatrix = new Matrix(rows - 1, columns - 1);
+    for (int i = 1; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
+        if (j < col) subMatrix.setElement(i - 1, j, getElement(i, j));
+        if (j > col) subMatrix.setElement(i - 1, j - 1, getElement(i, j));
+      }
+    }
+    return subMatrix;
+  }
+
+  public int calculateDeterminant() {
+    if (rows == 1) {
+      return matrix[0][0];
+    }
+
+    if (rows == 2) {
+      return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    }
+
+    int determinant = 0;
+    int sign = 1;
+
+    for (int col = 0; col < columns; col++) {
+      Matrix subMatrix = createSubMatrix(col);
+      determinant += sign * matrix[0][col] * subMatrix.calculateDeterminant();
+      sign = -sign;
+    }
+
+    return determinant;
+  }
 }
 
 public class Main {
 
   public static void main(String[] args) {
-    // Matrix defaultMatrix = new Matrix(4, 4);
-    // defaultMatrix.print();
-    int[][] sample1 = { { 1, 2, 3 }, { 1, 2, 5 }, { 5, 2, 1 } };
+    Matrix defaultMatrix = new Matrix();
+    System.out.println("Default-Matrix :");
+    defaultMatrix.print();
+
+    int[][] sample1 = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
     Matrix matrix1 = Matrix.copyValueOf(sample1);
+    System.out.println("Matrix1 :");
     matrix1.print();
+
     int[][] sample2 = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
     Matrix matrix2 = Matrix.copyValueOf(sample2);
+    System.out.println("Matrix2 :");
     matrix2.print();
+
     Matrix sum = matrix1.add(matrix2);
-    sum.print();
+    if (sum != null) {
+      System.out.println("Addition :");
+      sum.print();
+    }
+
     Matrix difference = matrix1.subtract(matrix2);
-    difference.print();
+    if (difference != null) {
+      System.out.println("Subtraction :");
+      difference.print();
+    }
+
     Matrix product = matrix1.multiply(matrix2);
+    System.out.println("Product :");
     product.print();
+
+    int determinant = matrix1.calculateDeterminant();
+    System.out.println("Determinant : " + determinant);
   }
 }
