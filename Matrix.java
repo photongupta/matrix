@@ -7,12 +7,6 @@ class Matrix {
   private int rows;
   private int columns;
 
-  public Matrix() {
-    this.rows = 3;
-    this.columns = 3;
-    this.matrix = new int[3][3];
-  }
-
   public Matrix(int row, int col) {
     this.rows = row;
     this.columns = col;
@@ -29,6 +23,31 @@ class Matrix {
     return newMatrix;
   }
 
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < columns; col++) {
+        sb.append(getElement(row, col)).append(" ");
+      }
+      sb.append("\n");
+    }
+    return sb.toString();
+  }
+
+  private boolean haveSameDimensions(Matrix other) {
+    return rows == other.rows && columns == other.columns;
+  }
+
+  public boolean equals(Matrix other) {
+    if (!haveSameDimensions(other)) return false;
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < columns; col++) {
+        if (matrix[row][col] != other[row][col]) return false;
+      }
+    }
+    return true;
+  }
+
   private int getElement(int row, int col) {
     return matrix[row][col];
   }
@@ -39,16 +58,6 @@ class Matrix {
 
   private void insertRow(int rowIndex, int[] row) {
     this.matrix[rowIndex] = row;
-  }
-
-  public void print() {
-    for (int row = 0; row < rows; row++) {
-      for (int col = 0; col < columns; col++) {
-        System.out.print(getElement(row, col) + " ");
-      }
-      System.out.println();
-    }
-    System.out.println();
   }
 
   private int calculate(Matrix other, int row, int col, char action) {
@@ -89,10 +98,6 @@ class Matrix {
     return result;
   }
 
-  private boolean haveSameDimensions(Matrix other) {
-    return rows == other.rows && columns == other.columns;
-  }
-
   public Matrix add(Matrix other) {
     if (!haveSameDimensions(other)) return null;
     return performAction(other, ADD);
@@ -107,12 +112,16 @@ class Matrix {
     return performAction(other, MULTIPLY);
   }
 
-  private Matrix createSubMatrix(int col) {
+  private Matrix createSubMatrix(int columnNumber) {
     Matrix subMatrix = new Matrix(rows - 1, columns - 1);
     for (int i = 1; i < rows; i++) {
       for (int j = 0; j < columns; j++) {
-        if (j < col) subMatrix.setElement(i - 1, j, getElement(i, j));
-        if (j > col) subMatrix.setElement(i - 1, j - 1, getElement(i, j));
+        int row = i - 1;
+        int col = j;
+        if (j > columnNumber) col = j - 1;
+        if (j != columnNumber) {
+          subMatrix.setElement(row, col, getElement(i, j));
+        }
       }
     }
     return subMatrix;
