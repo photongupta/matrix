@@ -24,7 +24,7 @@ public class Main {
 
     Matrix product = matrix1.multiply(matrix2);
     System.out.println("Product :");
-    System.out.println(multiply);
+    System.out.println(product);
 
     int determinant = matrix1.calculateDeterminant();
     System.out.println("Determinant : " + determinant);
